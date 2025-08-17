@@ -1,9 +1,6 @@
 package com.cavalcante.hugo.smart_bank_api.service;
 
-import com.cavalcante.hugo.smart_bank_api.dto.ContaRequestDTO;
-import com.cavalcante.hugo.smart_bank_api.dto.ContaResponseDTO;
-import com.cavalcante.hugo.smart_bank_api.dto.OperacaoRequestDTO;
-import com.cavalcante.hugo.smart_bank_api.dto.TransferenciaRequestDTO;
+import com.cavalcante.hugo.smart_bank_api.dto.*;
 import com.cavalcante.hugo.smart_bank_api.exceptions.ClienteNaoEncontradoException;
 import com.cavalcante.hugo.smart_bank_api.exceptions.ContaNaoEncontradaException;
 import com.cavalcante.hugo.smart_bank_api.model.Cliente;
@@ -13,6 +10,8 @@ import com.cavalcante.hugo.smart_bank_api.model.enums.TipoTransacao;
 import com.cavalcante.hugo.smart_bank_api.repository.ClienteRepositoy;
 import com.cavalcante.hugo.smart_bank_api.repository.ContaRepository;
 import com.cavalcante.hugo.smart_bank_api.repository.TransacaoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -150,6 +150,19 @@ public class ContaService {
         List<Transacao> transacoes = criarTransacoesTransferencia(contaOrigem, contaDestino, valorTransferencia);
         transacaoRepository.saveAll(transacoes);
 
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransacaoResponseDTO> listarTransacoesPorConta(Long contaId, Pageable pageable){
+        if (!contaRepository.existsById(contaId)) {
+            throw new ContaNaoEncontradaException("Conta não encontrada com o ID: " + contaId);
+        }
+
+        // 2. Buscar as transações paginadas no repositório
+        Page<Transacao> paginaDeTransacoes = transacaoRepository.findByContaId(contaId, pageable);
+
+        // 3. Converter a página de Entidades (Transacao) para uma página de DTOs (TransacaoResponseDTO)
+        return paginaDeTransacoes.map(TransacaoResponseDTO::fromEntity);
     }
 
     private String gerarNumeroDaConta(){

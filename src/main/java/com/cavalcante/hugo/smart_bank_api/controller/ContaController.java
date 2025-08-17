@@ -2,9 +2,14 @@ package com.cavalcante.hugo.smart_bank_api.controller;
 
 import com.cavalcante.hugo.smart_bank_api.dto.ContaResponseDTO;
 import com.cavalcante.hugo.smart_bank_api.dto.OperacaoRequestDTO;
+import com.cavalcante.hugo.smart_bank_api.dto.TransacaoResponseDTO;
 import com.cavalcante.hugo.smart_bank_api.dto.TransferenciaRequestDTO;
 import com.cavalcante.hugo.smart_bank_api.service.ContaService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,5 +48,14 @@ public class ContaController {
     public ResponseEntity transferir(@Valid @RequestBody TransferenciaRequestDTO transferenciaRequestDTO){
         contaService.transferencia(transferenciaRequestDTO);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/transacoes")
+    public ResponseEntity<Page<TransacaoResponseDTO>> listarTransacoes(
+            @PathVariable Long id,
+            @PageableDefault(size = 10, sort = "dataHora", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<TransacaoResponseDTO> paginaDeTransacoes = contaService.listarTransacoesPorConta(id, pageable);
+        return ResponseEntity.ok(paginaDeTransacoes);
     }
 }
